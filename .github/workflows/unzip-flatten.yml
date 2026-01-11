@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  workflows: write
 
 jobs:
   unzip-and-flatten:
@@ -32,25 +31,18 @@ jobs:
       - name: Extract ZIP files and flatten structure
         run: |
           set -euo pipefail
-
           shopt -s dotglob
-
           while IFS= read -r -d '' zip_file; do
             echo "Processing: $zip_file"
-
             TEMP_DIR=$(mktemp -d)
             trap "rm -rf '$TEMP_DIR'" EXIT
-
             unzip -o -q "$zip_file" -d "$TEMP_DIR"
-
             cd "$TEMP_DIR"
-
             if [ "$(find . -maxdepth 1 -type f | wc -l)" -gt 0 ]; then
               cd "$OLDPWD"
               cp -r "$TEMP_DIR"/* .
             else
               FIRST_LEVEL_DIRS=$(find . -maxdepth 1 -type d | tail -n +2)
-
               if [ "$(echo "$FIRST_LEVEL_DIRS" | wc -l)" -eq 1 ]; then
                 TOP_DIR=$(find . -maxdepth 1 -type d | tail -n +2 | head -1)
                 cd "$OLDPWD"
@@ -60,12 +52,9 @@ jobs:
                 cp -r "$TEMP_DIR"/*/ .
               fi
             fi
-
             rm -f "$zip_file"
             echo "Completed: $zip_file"
-
           done < <(find . -maxdepth 1 -type f -name "*.zip" -print0)
-
           shopt -u dotglob
 
       - name: Delete workflow file only
@@ -88,7 +77,6 @@ jobs:
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
-          fi
 
       - name: Commit and push changes
         if: steps.git-status.outputs.has_changes == 'true'
